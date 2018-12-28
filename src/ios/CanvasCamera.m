@@ -71,7 +71,7 @@ static BOOL const LOGGING                    = NO;
 - (NSURL*) urlTransformer:(NSURL*)url
 {
     NSURL* urlToTransform = url;
-    
+
     // for backwards compatibility - we check if this property is there
     SEL sel = NSSelectorFromString(@"urlTransformer");
     if ([self.commandDelegate respondsToSelector:sel]) {
@@ -82,7 +82,7 @@ static BOOL const LOGGING                    = NO;
             urlToTransform = urlTransformer(url);
         }
     }
-    
+
     return urlToTransform;
 }
 
@@ -99,10 +99,10 @@ static BOOL const LOGGING                    = NO;
 }
 
 - (void)startCapture:(CDVInvokedUrlCommand *)command {
-    
+
     // init parameters - default values
     [self initDefaults];
-    
+
     // parse options
     @try {
         if ((command.arguments).count > 0) {
@@ -115,15 +115,15 @@ static BOOL const LOGGING                    = NO;
         self.callbackId = nil;
         return;
     }
-    
+
     self.callbackId = command.callbackId;
-    
+
     if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][startCapture] Starting async startCapture thread...");
-    
+
     self.hasPendingOperation = YES;
-    
+
     __weak CanvasCamera* weakSelf = self;
-    
+
     [self.commandDelegate runInBackground:^{
         if([weakSelf startCamera]) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][startCapture] Capture started !");
@@ -139,17 +139,17 @@ static BOOL const LOGGING                    = NO;
             weakSelf.callbackId = nil;
         }
     }];
-    
+
 }
 
 - (void)stopCapture:(CDVInvokedUrlCommand *)command {
-    
+
     if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][stopCapture] Starting async stopCapture thread...");
-    
+
     self.hasPendingOperation = YES;
-    
+
     __weak CanvasCamera* weakSelf = self;
-    
+
     [self.commandDelegate runInBackground:^{
         CDVPluginResult *pluginResult = nil;
         @try {
@@ -168,7 +168,7 @@ static BOOL const LOGGING                    = NO;
 }
 
 - (void)flashMode:(CDVInvokedUrlCommand *)command {
-    
+
     // parse options
     @try {
         if ((command.arguments).count > 0) {
@@ -180,13 +180,13 @@ static BOOL const LOGGING                    = NO;
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         return;
     }
-    
+
     if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][stopCapture] Starting async flashMode thread...");
-    
+
     self.hasPendingOperation = YES;
-    
+
     __weak CanvasCamera* weakSelf = self;
-    
+
     [self.commandDelegate runInBackground:^{
         CDVPluginResult *pluginResult = nil;
         if (weakSelf.isPreviewing && weakSelf.captureDevice) {
@@ -218,7 +218,7 @@ static BOOL const LOGGING                    = NO;
 }
 
 - (void)cameraPosition:(CDVInvokedUrlCommand *)command {
-    
+
     // parse options
     @try {
         if ((command.arguments).count > 0) {
@@ -230,13 +230,13 @@ static BOOL const LOGGING                    = NO;
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         return;
     }
-    
+
     if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][cameraPosition] Starting async cameraPosition thread...");
-    
+
     self.hasPendingOperation = YES;
-    
+
     __weak CanvasCamera* weakSelf = self;
-    
+
     [self.commandDelegate runInBackground:^{
         CDVPluginResult *pluginResult = nil;
         if (weakSelf.isPreviewing && weakSelf.captureDevice) {
@@ -271,23 +271,23 @@ static BOOL const LOGGING                    = NO;
 
 - (BOOL)startCamera {
     [self stopCamera];
-    
+
     self.captureDevice = [self getDeviceWithPosition:self.devicePosition];
-    
+
     if (self.captureDevice) {
         NSError *error = nil;
         self.captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:self.captureDevice error:&error];
         if (self.captureDeviceInput) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][startCamera] Capture device input initialized.");
-            
+
             if (!self.captureSession) {
                 self.captureSession = [[AVCaptureSession alloc] init];
             }
-            
+
             [self.captureSession beginConfiguration];
-            
+
             [self initSessionParameters:self.captureSession];
-            
+
             if ([self.captureSession canAddInput:self.captureDeviceInput]) {
                 [self.captureSession addInput:self.captureDeviceInput];
                 if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][startCamera] Capture device input added.");
@@ -297,19 +297,19 @@ static BOOL const LOGGING                    = NO;
                 [self stopCamera];
                 return NO;
             }
-            
+
             self.captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
-            
+
             self.captureVideoDataOutput.videoSettings = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey];
-            
+
             [self.captureVideoDataOutput setAlwaysDiscardsLateVideoFrames:YES];
-            
+
             if (!self.sessionQueue) {
                 self.sessionQueue = dispatch_queue_create("canvas_camera_capture_session_queue", DISPATCH_QUEUE_SERIAL);
             }
-            
+
             [self.captureVideoDataOutput setSampleBufferDelegate:(id)self queue:self.sessionQueue];
-            
+
             if ([self.captureSession canAddOutput:self.captureVideoDataOutput]) {
                 [self.captureSession addOutput:self.captureVideoDataOutput];
                 if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][startCamera] Capture video data output added.");
@@ -319,11 +319,11 @@ static BOOL const LOGGING                    = NO;
                 [self stopCamera];
                 return NO;
             }
-            
+
             [self.captureSession commitConfiguration];
-            
+
             dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-            
+
             dispatch_async(self.sessionQueue, ^{
                 self.fileId = 0;
                 [self.captureSession startRunning];
@@ -331,9 +331,9 @@ static BOOL const LOGGING                    = NO;
                 self.isPreviewing = YES;
                 dispatch_semaphore_signal(semaphore);
             });
-            
+
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-            
+
             return YES;
         } else {
             if (LOGGING) NSLog(@"[ERROR][CanvasCamera][startCamera] Could not set capture device input : %@", error.localizedDescription);
@@ -348,7 +348,7 @@ static BOOL const LOGGING                    = NO;
 - (void)stopCamera {
     if (self.sessionQueue) {
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-        
+
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             if (self.captureSession) {
                 if ((self.captureSession).running) {
@@ -375,7 +375,7 @@ static BOOL const LOGGING                    = NO;
             }
             dispatch_semaphore_signal(semaphore);
         });
-        
+
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     }
 }
@@ -400,11 +400,11 @@ static BOOL const LOGGING                    = NO;
         if ([self initOptimalSessionPreset:self.captureSession captureWidth:self.captureWidth captureHeight:self.captureHeight]) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][initSessionParameters] Capture size is set to width : %ld, height : %ld", (long)self.captureWidth, (long)self.captureHeight);
         }
-        
+
         if ([self initOptimalFrameRate:self.captureDevice fps:self.fps]) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][initSessionParameters] Capture fps range is set to min : %ld, max : %ld", (long)self.fps, (long)self.fps);
         }
-        
+
         if ([self initOptimalFlashMode:self.captureDevice flashMode:self.flashMode]) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][initSessionParameters] Capture flash mode is set to : %@", self.flashMode ? @"On" : @"Off");
         }
@@ -417,7 +417,7 @@ static BOOL const LOGGING                    = NO;
         if (device.position == position) {
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][getDeviceWithPosition] Capture device found for position : %@", [self devicePositionToString:position]);
             return device;
-            
+
         }
     }
     return nil;
@@ -460,7 +460,7 @@ static BOOL const LOGGING                    = NO;
             return YES;
         }
     }
-    
+
     if (captureWidth <= 640 && captureHeight <= 480) {
         if([captureSession canSetSessionPreset:AVCaptureSessionPreset640x480]) {
             captureSession.sessionPreset = AVCaptureSessionPreset640x480;
@@ -469,7 +469,7 @@ static BOOL const LOGGING                    = NO;
             return YES;
         }
     }
-    
+
     if (captureWidth <= 1280 && captureHeight <= 720) {
         if([captureSession canSetSessionPreset:AVCaptureSessionPreset1280x720]) {
             captureSession.sessionPreset = AVCaptureSessionPreset1280x720;
@@ -478,7 +478,7 @@ static BOOL const LOGGING                    = NO;
             return YES;
         }
     }
-    
+
     if (captureWidth <= 1920 && captureHeight <= 1080) {
         if([captureSession canSetSessionPreset:AVCaptureSessionPreset1920x1080]) {
             captureSession.sessionPreset = AVCaptureSessionPreset1920x1080;
@@ -487,7 +487,7 @@ static BOOL const LOGGING                    = NO;
             return YES;
         }
     }
-    
+
     if (captureWidth <= 3480 && captureHeight <= 2160) {
         if([captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {
             captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
@@ -496,16 +496,16 @@ static BOOL const LOGGING                    = NO;
             return YES;
         }
     }
-    
+
     return NO;
 }
 
 - (BOOL) initOptimalFrameRate:(AVCaptureDevice *)captureDevice fps:(NSInteger) fps {
     BOOL frameRateSupported = NO;
-    
+
     CMTime frameDuration = CMTimeMake((int64_t)1, (int32_t)fps);
     NSArray *supportedFrameRateRanges = (captureDevice.activeFormat).videoSupportedFrameRateRanges;
-    
+
     NSError *error = nil;
     for (AVFrameRateRange *range in supportedFrameRateRanges) {
         if (CMTIME_COMPARE_INLINE(frameDuration, >=, range.minFrameDuration) &&
@@ -513,13 +513,13 @@ static BOOL const LOGGING                    = NO;
             frameRateSupported = YES;
         }
     }
-    
+
     if (frameRateSupported && [captureDevice lockForConfiguration:&error]) {
         captureDevice.activeVideoMaxFrameDuration = frameDuration;
         captureDevice.activeVideoMinFrameDuration = frameDuration;
         [captureDevice unlockForConfiguration];
     }
-    
+
     return frameRateSupported;
 }
 
@@ -529,22 +529,22 @@ static BOOL const LOGGING                    = NO;
                                      @"orientation" : [self getCurrentOrientationToString]
                                      }
                              };
-    
+
     return [self getPluginResultMessage:message pluginOutput:output];
 }
 
 - (NSDictionary*)getPluginResultMessage:(NSString *)message pluginOutput:(NSDictionary *)output {
-    
+
     NSDictionary *canvas = @{
                              @"width" : @(self.canvasWidth),
                              @"height" : @(self.canvasHeight)
                              };
-    
+
     NSDictionary *capture = @{
                               @"width" : @(self.captureWidth),
                               @"height" : @(self.captureHeight)
                               };
-    
+
     NSDictionary *options = @{
                               @"width" : @(self.width),
                               @"height" : @(self.height),
@@ -556,18 +556,18 @@ static BOOL const LOGGING                    = NO;
                               @"canvas" : canvas,
                               @"capture" : capture
                               };
-    
+
     NSDictionary *preview = @{
                               @"started" : @(self.isPreviewing)
                               };
-    
+
     NSDictionary *result = @{
                              @"message" : message,
                              @"options" : options,
                              @"preview" : preview,
                              @"output" : output
                              };
-    
+
     return result;
 }
 
@@ -575,30 +575,30 @@ static BOOL const LOGGING                    = NO;
     if (![options isKindOfClass:[NSDictionary class]]) {
         return;
     }
-    
+
     NSString *valueAsString = nil;
-    
+
     // devicePosition
     valueAsString = options[CCLensOrientationKey];
     if (valueAsString) {
         self.devicePosition = [self devicePosition:valueAsString];
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Capture device position : %@", [self devicePositionToString:self.devicePosition]);
     }
-    
+
     // use
     valueAsString = options[CCUseKey];
     if (valueAsString) {
         self.use = valueAsString;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Use : %@", self.use);
     }
-    
+
     // fps
     valueAsString = options[CCFpsKey];
     if (valueAsString) {
         self.fps = valueAsString.integerValue;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Fps : %ld", (long)self.fps);
     }
-    
+
     // width
     valueAsString = options[CCWidthKey];
     if (valueAsString) {
@@ -607,7 +607,7 @@ static BOOL const LOGGING                    = NO;
         self.captureWidth = self.width;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Global width : %ld", (long)self.width);
     }
-    
+
     // height
     valueAsString = options[CCHeightKey];
     if (valueAsString) {
@@ -616,33 +616,33 @@ static BOOL const LOGGING                    = NO;
         self.captureHeight = self.height;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Global height : %ld", (long)self.height);
     }
-    
+
     // flashMode
     valueAsString = options[CCFlashModeKey];
     if (valueAsString) {
         self.flashMode = [self AVCaptureFlashMode:valueAsString.boolValue];
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Flash mode : %@", [self AVCaptureFlashModeAsBoolean:self.flashMode] ? @"true" : @"false");
     }
-    
+
     // hasThumbnail
     valueAsString = options[CCHasThumbnailKey];
     if (valueAsString) {
         self.hasThumbnail = valueAsString.boolValue;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Thumbnail ratio : %@", self.hasThumbnail ? @"true" : @"false");
     }
-    
+
     // thumbnailRatio
     valueAsString = options[CCThumbnailRatioKey];
     if (valueAsString) {
         self.thumbnailRatio = valueAsString.doubleValue;
         if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Thumbnail ratio : %f", self.thumbnailRatio);
     }
-    
+
     NSDictionary *valueAsDictionnary = nil;
-    
+
     // canvas
     valueAsDictionnary = options[CCCanvasKey];
-    
+
     if (valueAsDictionnary) {
         valueAsString = valueAsDictionnary[CCWidthKey];
         if (valueAsString) {
@@ -657,10 +657,10 @@ static BOOL const LOGGING                    = NO;
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Canvas height : %ld", (long)self.canvasHeight);
         }
     }
-    
+
     // capture
     valueAsDictionnary = options[CCCaptureKey];
-    
+
     if (valueAsDictionnary) {
         valueAsString = valueAsDictionnary[CCWidthKey];
         if (valueAsString) {
@@ -675,7 +675,7 @@ static BOOL const LOGGING                    = NO;
             if (LOGGING) NSLog(@"[DEBUG][CanvasCamera][parseOptions] Capture height : %ld", (long)self.captureHeight);
         }
     }
-    
+
     // parsing additional options
     [self parseAdditionalOptions:options];
 }
@@ -716,9 +716,9 @@ static BOOL const LOGGING                    = NO;
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
     if (self.isPreviewing && self.callbackId) {
-        
+
         [self setVideoOrientation:connection];
-        
+
         @autoreleasepool {
             // Getting image files paths
             NSMutableDictionary *files = [self getImageFilesPaths];
@@ -730,22 +730,22 @@ static BOOL const LOGGING                    = NO;
             BOOL rotated = (BOOL)[self getDisplayRotation];
             // Resize the ui image to match target canvas size
             uiImage = [self resizedUIImage:uiImage toSize:CGSizeMake(self.canvasWidth, self.canvasHeight) rotated:rotated];
-            
+
             // Convert the ui image to JPEG NSData
             NSData *fullsizeData = UIImageJPEGRepresentation(uiImage, 1.0);
-            
+
             // Same operation for the image thumbnail version
             NSData *thumbnailData = nil;
             if (self.hasThumbnail) {
                 thumbnailData = UIImageJPEGRepresentation([self resizedUIImage:uiImage ratio:self.thumbnailRatio], 1.0);
             }
-            
+
             // Allocating output NSDictionnary
             NSMutableDictionary *images =  [[NSMutableDictionary alloc] init];
-            
+
             // Populating images NSDictionnary
             images[@"fullsize"] = [[NSMutableDictionary alloc] init];
-            
+
             NSString *fullImagePath = nil;
             if ([self.use isEqualToString:@"file"]) {
                 // Get a file path to save the JPEG as a file
@@ -760,31 +760,31 @@ static BOOL const LOGGING                    = NO;
                         if (LOGGING) NSLog(@"[ERROR][CanvasCamera][captureOutput] Could not save fullsize image file with path [%@].", fullImagePath);
                         fullImagePath = nil;
                     }
-                    
+
                 } else {
                     if (LOGGING) NSLog(@"[ERROR][CanvasCamera][captureOutput] Unable to retrieve path for fullsize image file.");
                     fullImagePath = nil;
                 }
             }
-            
+
             NSString *fullImageDataToB64 = nil;
             if ([self.use isEqualToString:@"data"]) {
                 fullImageDataToB64 = [NSString stringWithFormat:@"data:image/jpeg;base64,%@", [fullsizeData base64EncodedStringWithOptions:0]];
                 images[@"fullsize"][@"data"] = (fullImageDataToB64) ? fullImageDataToB64 : @"";
             }
-            
+
             // release fullsizeData
             fullsizeData = nil;
-            
+
             images[@"fullsize"][@"rotation"] = @([self getDisplayRotation]);
             images[@"fullsize"][@"orientation"] = [self getCurrentOrientationToString];
             images[@"fullsize"][@"timestamp"] = @([NSDate date].timeIntervalSince1970 * 1000);
-            
+
             fullImagePath = nil;
             fullImageDataToB64 = nil;
-            
+
             images[@"thumbnail"] = [[NSMutableDictionary alloc] init];
-            
+
             if (thumbnailData) {
                 NSString *thumbImagePath = nil;
                 if ([self.use isEqualToString:@"file"]) {
@@ -804,41 +804,41 @@ static BOOL const LOGGING                    = NO;
                         thumbImagePath = nil;
                     }
                 }
-                
+
                 NSString *thumbImageDataToB64 = nil;
                 if ([self.use isEqualToString:@"data"]) {
                     thumbImageDataToB64 = [NSString stringWithFormat:@"data:image/jpeg;base64,%@", [thumbnailData base64EncodedStringWithOptions:0]];
                     images[@"thumbnail"][@"data"] = (thumbImageDataToB64) ? thumbImageDataToB64 : @"";
                 }
-                
+
                 // release thumbnailData
                 thumbnailData = nil;
-                
+
                 images[@"thumbnail"][@"rotation"] = @([self getDisplayRotation]);
                 images[@"thumbnail"][@"orientation"] = [self getCurrentOrientationToString];
                 images[@"thumbnail"][@"timestamp"] = @([NSDate date].timeIntervalSince1970 * 1000);
-                
+
                 thumbImagePath = nil;
                 thumbImageDataToB64 = nil;
             }
-            
+
             // Allocating output NSDictionnary
             NSMutableDictionary *output =  [[NSMutableDictionary alloc] init];
-            
+
             // Populating output NSDictionnary
             output[@"images"] = images;
-            
+
             [self addPluginResultDataOutput:output ciImage:ciImage rotated:rotated];
-            
+
             // release images output dictionnary
             images = nil;
-            
+
             // release ciImage
             ciImage = nil;
-            
+
             // release uiImage
             uiImage = nil;
-            
+
             if (self.isPreviewing && self.callbackId) {
                 CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[self getPluginResultMessage:@"OK" pluginOutput:output]];
                 [pluginResult setKeepCallbackAsBool:YES];
@@ -849,14 +849,14 @@ static BOOL const LOGGING                    = NO;
 }
 
 - (CIImage *)CIImageFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    
+
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    
+
     // CFDictionaryRef attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault, sampleBuffer, kCMAttachmentMode_ShouldPropagate);
     // CIImage *ciImage = [[CIImage alloc] initWithCVPixelBuffer:pixelBuffer options:(__bridge NSDictionary *)attachments];
-    
+
     CIImage *ciImage = [[CIImage alloc] initWithCVPixelBuffer:pixelBuffer options: nil];
-    
+
     return ciImage;
 }
 
@@ -872,33 +872,33 @@ static BOOL const LOGGING                    = NO;
 
 - (UIImage *)UIImageFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    
+
     CVPixelBufferLockBaseAddress(imageBuffer,0);
     uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
     size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
     size_t width = CVPixelBufferGetWidth(imageBuffer);
     size_t height = CVPixelBufferGetHeight(imageBuffer);
-    
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef newContext = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
-    
+
     CGImageRef cgImage = CGBitmapContextCreateImage(newContext);
-    
+
     CGContextRelease(newContext);
     CGColorSpaceRelease(colorSpace);
-    
+
     UIImage *uiImage = [UIImage imageWithCGImage:cgImage];
-    
+
     CGImageRelease(cgImage);
-    
+
     CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
-    
+
     return uiImage;
 }
 
 - (void) setVideoOrientation:(AVCaptureConnection *)connection {
     UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
-    
+
     if (connection.supportsVideoOrientation) {
         switch(deviceOrientation) {
             case UIInterfaceOrientationPortraitUpsideDown:
@@ -928,9 +928,9 @@ static BOOL const LOGGING                    = NO;
 }
 
 - (NSString *)getCurrentOrientationToString {
-    
+
     UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
-    
+
     switch(deviceOrientation) {
         case UIInterfaceOrientationPortraitUpsideDown:
             return @"portrait";
@@ -953,10 +953,10 @@ static BOOL const LOGGING                    = NO;
 - (NSMutableDictionary *)getImageFilesPaths {
     @synchronized(self) {
         NSMutableDictionary *files =  [[NSMutableDictionary alloc] init];
-        
+
         if (self.appPath) {
             self.fileId ++;
-            
+
             for (NSString* fileName in self.fileNames) {
                 BOOL deleted;
                 NSError *error = nil;
@@ -970,7 +970,7 @@ static BOOL const LOGGING                    = NO;
                         }
                     }
                 }
-                
+
                 NSString *curFile = [self.appPath stringByAppendingPathComponent:[NSString stringWithFormat:@"%@%ld%@", [fileName substringToIndex:1], (long)(self.fileId), [NSString stringWithFormat:@"-%@.jpg", self.filenameSuffix]]];
                 if ([[NSFileManager defaultManager] fileExistsAtPath:curFile]) {
                     error = nil;
@@ -979,11 +979,11 @@ static BOOL const LOGGING                    = NO;
                         if (LOGGING) NSLog(@"[ERROR][CanvasCamera][getImageFilesPaths] Could not delete current file : %@.", error.localizedDescription);
                     }
                 }
-                
+
                 [files setValue:curFile  forKey:fileName];
             }
         }
-        
+
         return files;
     }
 }
@@ -997,7 +997,7 @@ static BOOL const LOGGING                    = NO;
             if (LOGGING) NSLog(@"[ERROR][CanvasCamera][deleteCachedImageFiles] Could not get temporary folder contents : %@.", error.localizedDescription);
         } else {
             if (filesList.count > 0) {
-                filesList = [filesList filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:[NSString stringWithFormat:@"self ENDSWITH '-%@.jpg", self.filenameSuffix]]];
+                filesList = [filesList filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:[NSString stringWithFormat:@"self ENDSWITH '-%@.jpg'", self.filenameSuffix]]];
                 if (filesList.count > 0) {
                     BOOL deleted;
                     for (NSString* file in filesList) {
@@ -1035,10 +1035,10 @@ static BOOL const LOGGING                    = NO;
                 return nil;
             }
         }
-        
+
         return appDataPath;
     }
-    
+
     return nil;
 }
 
@@ -1046,41 +1046,41 @@ static BOOL const LOGGING                    = NO;
     if (ratio <= 0) {
         ratio = 1;
     }
-    
+
     CGSize size = CGSizeMake((CGFloat)(uiImage.size.width * ratio), (CGFloat)(uiImage.size.height * ratio));
-    
+
     return [self resizedUIImage:uiImage toSize:size];
 }
 
 - (UIImage *)resizedUIImage:(UIImage *)uiImage toSize:(CGSize)size rotated:(BOOL)rotated {
-    
+
     if (rotated) {
         size = CGSizeMake(size.height, size.width);
     }
-    
+
     return [self resizedUIImage:uiImage toSize:size];
 }
 
 - (UIImage *)resizedUIImage:(UIImage *)uiImage toSize:(CGSize)size {
     size = [self calculateAspectRatio:uiImage.size targetSize:size];
-    
+
     UIGraphicsBeginImageContext(size);
-    
+
     CGContextRef context = UIGraphicsGetCurrentContext();
-    
+
     CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-    
+
     [uiImage drawInRect:CGRectMake(0, 0, size.width, size.height)];
     UIImage *resizedUIImage = UIGraphicsGetImageFromCurrentImageContext();
-    
+
     UIGraphicsEndImageContext();
-    
+
     return resizedUIImage;
 }
 
 - (CGSize)calculateAspectRatio:(CGSize)origSize targetSize:(CGSize)targetSize {
     CGSize newSize = CGSizeMake(targetSize.width, targetSize.height);
-    
+
     if (newSize.width <= 0 && newSize.height <= 0) {
         // If no new width or height were specified return the original bitmap
         newSize.width = origSize.width;
@@ -1100,15 +1100,14 @@ static BOOL const LOGGING                    = NO;
         // would result in whitespace in the new image.
         CGFloat newRatio = (CGFloat) (newSize.width /  newSize.height);
         CGFloat origRatio = (CGFloat) (origSize.width / origSize.height);
-        
+
         if (origRatio > newRatio) {
             newSize.height = (CGFloat) ((newSize.width * origSize.height) / origSize.width);
         } else if (origRatio < newRatio) {
             newSize.width = (CGFloat) ((newSize.height * origSize.width) / origSize.height);
         }
     }
-    
+
     return newSize;
 }
 @end
-
