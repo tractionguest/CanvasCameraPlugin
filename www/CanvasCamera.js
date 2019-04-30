@@ -258,7 +258,7 @@ CanvasCamera.prototype.createRenderer = (function (element, canvasCamera) {
                             case 'file':
                                 if (data[this.canvasCamera.options.use].search('file://') > -1) {
                                     // If we are running in WKWebView.
-                                    if (window.webkit || window.webkit.messageHandlers) {
+                                    if (window.webkit && window.webkit.messageHandlers) {
                                         // If we are using cordova-plugin-ionic-webview plugin which replaces the default UIWebView with WKWebView.
                                         if (window.Ionic && window.Ionic.WebView && window.Ionic.WebView.convertFileSrc) {
                                             data[this.canvasCamera.options.use] = window.Ionic.WebView.convertFileSrc(data[this.canvasCamera.options.use]);
