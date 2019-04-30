@@ -119,9 +119,13 @@ Optional parameters to customize the settings.
     cameraFacing: 'front' // or 'back',
     onBeforeDraw: function(frame){
       // do something before drawing a frame
+      // frame.image; // HTMLImageElement
+      // frame.element; // HTMLCanvasElement
     },
     onAfterDraw: function(frame){
       // do something after drawing a frame
+      // frame.image.src; // file path or base64 data URI
+      // frame.element.toDataURL(); // requested base64 data URI
     }
 }
 
@@ -157,6 +161,8 @@ let options:CanvasCamera.CanvasCameraOptions = {
     cameraPosition: 'back',
     onAfterDraw: function(frame) {
       // do something with each frame
+      // frame.image.src; // file path or base64 data URI
+      // frame.element.toDataURL(); // requested base64 data URI
     }
 };
 
@@ -176,6 +182,8 @@ let options:CanvasCamera.CanvasCameraOptions = {
     thumbnailRatio: 1/6,
     onAfterDraw: function(frame) {
       // do something with each frame of the fullsize canvas element only
+      // frame.image.src; // file path or base64 data URI
+      // frame.element.toDataURL(); // requested base64 data URI
     }
 };
 
