@@ -79,7 +79,7 @@ The `capture` callback function will draw the image inside a canvas element to d
 #### Example
 ```javascript
 var options = {
-    cameraPosition: 'front',
+    cameraFacing: 'front',
 };
 window.plugin.CanvasCamera.start(options);
 ```
@@ -158,7 +158,7 @@ let fullsizeCanvasElement = document.getElementById('fullsize-canvas');
 CanvasCamera.initialize(fullsizeCanvasElement);
 
 let options:CanvasCamera.CanvasCameraOptions = {
-    cameraPosition: 'back',
+    cameraFacing: 'back',
     onAfterDraw: function(frame) {
       // do something with each frame
       // frame.image.src; // file path or base64 data URI
@@ -177,7 +177,7 @@ let thumbnailCanvasElement = document.getElementById('thumbnail-canvas');
 CanvasCamera.initialize(fullsizeCanvasElement, thumbnailCanvasElement);
 
 let options:CanvasCamera.CanvasCameraOptions = {
-    cameraPosition: 'front',
+    cameraFacing: 'front',
     fps: 15,
     thumbnailRatio: 1/6,
     onAfterDraw: function(frame) {
