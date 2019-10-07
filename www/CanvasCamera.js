@@ -257,19 +257,12 @@ CanvasCamera.prototype.createRenderer = (function (element, canvasCamera) {
                         // type can be 'data' or 'file'
                         switch(this.canvasCamera.options.use) {
                             case 'file':
-                                if (data[this.canvasCamera.options.use].search('file://') > -1) {
-                                    // If we are running in WKWebView.
-                                    if (window.webkit && window.webkit.messageHandlers) {
-                                        // If we are using cordova-plugin-ionic-webview plugin which replaces the default UIWebView with WKWebView.
-                                        if (window.Ionic && window.Ionic.WebView && window.Ionic.WebView.convertFileSrc) {
-                                            data[this.canvasCamera.options.use] = window.Ionic.WebView.convertFileSrc(data[this.canvasCamera.options.use]);
-                                        }
-                                    }
-                                    // add a random seed to prevent browser caching.
-                                    this.image.src = data[this.canvasCamera.options.use] + '?seed=' + Math.round((new Date()).getTime() * Math.random() * 1000);
-                                } else {
-                                    this.image.src = data[this.canvasCamera.options.use];
+                                // If we are using cordova-plugin-ionic-webview plugin which replaces the default UIWebView with WKWebView.
+                                if (window.Ionic && window.Ionic.WebView && window.Ionic.WebView.convertFileSrc) {
+                                    data[this.canvasCamera.options.use] = window.Ionic.WebView.convertFileSrc(data[this.canvasCamera.options.use]);
                                 }
+                                // add a random seed to prevent browser caching.
+                                this.image.src = data[this.canvasCamera.options.use] + '?seed=' + Math.round((new Date()).getTime() * Math.random() * 1000);
                             break;
                             default:
                                 this.image.src = data[this.canvasCamera.options.use];
