@@ -363,14 +363,15 @@ CanvasCamera.prototype.createRenderer = (function (element, canvasCamera) {
     CanvasCamera.Renderer.prototype.setSize = function(size, auto) {
         this.fullscreen = !!auto || false;
         if (size && size.width && size.height) {
-        if (!isNaN(parseFloat(size.width)) && !isNaN(parseFloat(size.height))) {
-            this.size = size;
-            if (!this.fullscreen) {
-                if (parseFloat(size.width) >= parseFloat(window.innerWidth) && parseFloat(size.height) >= parseFloat(window.innerHeight)) {
-                    this.fullscreen = true;
+            if (!isNaN(parseFloat(size.width)) && !isNaN(parseFloat(size.height))) {
+                this.size = size;
+                if (!this.fullscreen) {
+                    // If size is higher than windows size, set size to fullscreen.
+                    if (parseFloat(size.width) >= parseFloat(window.innerWidth) && parseFloat(size.height) >= parseFloat(window.innerHeight)) {
+                        this.fullscreen = true;
+                    }
                 }
             }
-        }
         }
 
         return this;
@@ -551,35 +552,33 @@ CanvasCamera.prototype.setRenderingPresets = function() {
 CanvasCamera.prototype.getUISize = function() {
     var size = {
         width: window.innerWidth,
-        height: window.innerHeight,
+        height: window.innerHeight
     };
 
     if (this.options) {
+        var canvasWidth;
+        var canvasHeight;
+        // Check if canvas height and width are set.
         if (this.options.canvas) {
             if (this.options.canvas.width && this.options.canvas.height) {
-               if(!isNaN(parseFloat(this.options.canvas.width)) && ! isNaN(parseFloat(this.options.canvas.height))) {
-                    size.auto = false;
-                    if (this.getUIOrientation() === 'portrait') {
-                         size.width =  parseFloat(this.options.canvas.height);
-                         size.height = parseFloat(this.options.canvas.width);
-                    } else {
-                        size.width =  parseFloat(this.options.canvas.width);
-                        size.height = parseFloat(this.options.canvas.height);
-                    }
-               }
+                canvasWidth = parseFloat(this.options.canvas.width);
+                canvasHeight = parseFloat(this.options.canvas.height);
             }
         }
-
+        // Check if capture and canvas height and width are set.
         if (this.options.width && this.options.height) {
-            if(!isNaN(parseFloat(this.options.width)) && ! isNaN(parseFloat(this.options.height))) {
-                size.auto = false;
-                if (this.getUIOrientation() === 'portrait') {
-                    size.width = parseFloat(this.options.height);
-                    size.height = parseFloat(this.options.width);
-                } else {
-                    size.width = parseFloat(this.options.width);
-                    size.height = parseFloat(this.options.height);
-                }
+            canvasWidth = parseFloat(this.options.width);
+            canvasHeight = parseFloat(this.options.height);
+        }
+        // Assign height and width to UI size object.
+        if(!isNaN(canvasWidth) && !isNaN(canvasHeight)) {
+            size.auto = false;
+            if (this.getUIOrientation() === 'portrait') {
+                 size.width =  canvasHeight;
+                 size.height = canvasWidth;
+            } else {
+                size.width =  canvasWidth;
+                size.height = canvasHeight;
             }
         }
     }
@@ -602,19 +601,28 @@ CanvasCamera.prototype.getUIOrientation = function() {
 CanvasCamera.prototype.setRenderersSize = function(size) {
   if (size.width && size.height) {
       if (this.canvas.fullsize) {
-          this.canvas.fullsize.setSize({
-              width: parseFloat(size.width),
-              height: parseFloat(size.height)
-          }, size.auto);
-          if (this.canvas.thumbnail) {
-              this.options.hasThumbnail = true;
-              if (!this.options.thumbnailRatio) {
-                  this.options.thumbnailRatio = 1/6;
-              }
-              this.canvas.thumbnail.setSize({
-                  width: parseFloat((parseFloat(size.width) * parseFloat(this.options.thumbnailRatio))),
-                  height: parseFloat((parseFloat(size.height) * parseFloat(this.options.thumbnailRatio)))
-              });
+          var canvasWidth = parseFloat(size.width);
+          var canvasHeight = parseFloat(size.height);
+          if (!isNaN(canvasWidth) && !isNaN(canvasHeight)) {
+            this.canvas.fullsize.setSize({
+                width: canvasWidth,
+                height: canvasHeight
+            }, size.auto);
+            if (this.canvas.thumbnail) {
+                var thumbnailRatio;
+                if (this.options.thumbnailRatio) {
+                    thumbnailRatio = parseFloat(this.options.thumbnailRatio);
+                }
+                if (isNaN(thumbnailRatio)) {
+                    thumbnailRatio = 1/6;
+                    this.options.thumbnailRatio = 1/6;
+                }
+                this.options.hasThumbnail = true;
+                this.canvas.thumbnail.setSize({
+                    width: canvasWidth * thumbnailRatio,
+                    height: canvasHeight * thumbnailRatio
+                });
+            }
           }
       }
   }
