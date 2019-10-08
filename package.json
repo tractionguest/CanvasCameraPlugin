@@ -20,18 +20,18 @@
   ],
   "contributors": [
     {
-      "name" : "Virtuoworks",
-      "url" : "https://www.virtuoworks.com/"
+      "name": "Virtuoworks",
+      "url": "https://www.virtuoworks.com/"
     },
     {
-      "name" : "Sami Radi",
-      "email" : "sami.radi@virtuoworks.com",
-      "url" : "https://github.com/Sami-Radi"
+      "name": "Sami Radi",
+      "email": "sami.radi@virtuoworks.com",
+      "url": "https://github.com/Sami-Radi"
     },
     {
-      "name" : "Sébastien Guillon",
-      "email" : "sebastien.guillon@virtuoworks.com",
-      "url" : "https://github.com/Sebastien-Guillon"
+      "name": "Sébastien Guillon",
+      "email": "sebastien.guillon@virtuoworks.com",
+      "url": "https://github.com/Sebastien-Guillon"
     }
   ],
   "engines": {
@@ -41,5 +41,9 @@
       }
     }
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "eslint-config-google": "^0.14.0"
+  }
 }
