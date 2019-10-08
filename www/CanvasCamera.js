@@ -185,7 +185,11 @@ CanvasCamera.prototype.createRenderer = (function(element, canvasCamera) {
       this.image.crossOrigin = 'Anonymous';
 
       this.image.addEventListener('load', function(event) {
-        var frame = this.canvasCamera.createFrame(this.image, this.element, this);
+        var frame = this.canvasCamera.createFrame(
+            this.image,
+            this.element,
+            this
+        );
 
         this.resize().clear();
         if (this.onBeforeDraw) {
@@ -230,7 +234,17 @@ CanvasCamera.prototype.createRenderer = (function(element, canvasCamera) {
     this.canvasCamera.dispatch('beforeframerendering', this, frame);
 
     if (frame) {
-      this.context.drawImage(frame.image, frame.sx, frame.sy, frame.sWidth, frame.sHeight, frame.dx, frame.dy, frame.dWidth, frame.dHeight);
+      this.context.drawImage(
+          frame.image,
+          frame.sx,
+          frame.sy,
+          frame.sWidth,
+          frame.sHeight,
+          frame.dx,
+          frame.dy,
+          frame.dWidth,
+          frame.dHeight
+      );
     }
 
     this.canvasCamera.dispatch('afterframerendering', this, frame);
@@ -491,7 +505,11 @@ CanvasCamera.prototype.flashMode = function(flashMode, onError, onSuccess) {
   }, this.nativeClass, 'flashMode', [flashMode]);
 };
 
-CanvasCamera.prototype.cameraPosition = function(cameraFacing, onError, onSuccess) {
+CanvasCamera.prototype.cameraPosition = function(
+    cameraFacing,
+    onError,
+    onSuccess
+) {
   this.disableRenderers();
   exec(function(data) {
     this.enableRenderers();
