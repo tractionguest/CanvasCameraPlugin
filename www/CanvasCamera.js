@@ -293,7 +293,7 @@ CanvasCamera.prototype.createRenderer = (function(element, canvasCamera) {
                 // replaces the default UIWebView with WKWebView.
                 var convertFilePath = window.WkWebView && window.WkWebView.convertFilePath;
                 var convertFileSrc = window.Ionic && window.Ionic.WebView && window.Ionic.WebView.convertFileSrc;
-                var convertFileFunction = convertFilePath || convertFileFunction;
+                var convertFileFunction = convertFilePath || convertFileSrc;
                 if (convertFileFunction) {
                   data[
                       this.canvasCamera.options.use
